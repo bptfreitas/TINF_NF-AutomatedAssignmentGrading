@@ -15,11 +15,11 @@ if [[ $debug -eq 1 ]]; then
 	
 	echo "NOME COMPLETO; REPOSITORIO" > test_repositories.txt
 	
-	echo "Bruno PROF; https://github.com/bptfreitas/TINF_NF_Template-UsuariosGruposPermissoes" \
+	echo "PROF; https://github.com/bptfreitas/TINF_NF_Template-UsuariosGruposPermissoes" \
 		>> test_repositories.txt
 		
-	echo "Bruno ALUNO; https://github.com/bptfreitas/TINF_NF_Aluno_ArquivosRedirecionamentos.git" \
-		>> test_repositories.txt		
+	echo "ALUNO; https://github.com/bptfreitas/TINF_NF_Aluno_ArquivosRedirecionamentos.git" \
+		>> test_repositories.txt
 		
 	mv test_repositories.txt works/student_repositories.txt
 
@@ -76,9 +76,9 @@ while read work; do
 	
 	student_repo=`basename $repo .git`
 	
-	sed "s/@BASE_REPOSITORY@/${repo//\//\\\/}/" Dockerfile_base > Dockerfile_base.1
+	sed "s/@BASE_REPOSITORY@/${base_repo//\//\\\/}/" Dockerfile_base > Dockerfile_base.1
 	
-	sed "s/@STUDENT_REPOSITORY@/${repo//\//\\\/}/" Dockerfile_base.1 > Dockerfile_base.2
+	sed "s/@STUDENT_REPOSITORY@/${student_repo//\//\\\/}/" Dockerfile_base.1 > Dockerfile_base.2
 	
 	mv Dockerfile_base.2 Dockerfile
 	
