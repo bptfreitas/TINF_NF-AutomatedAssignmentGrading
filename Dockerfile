@@ -6,16 +6,16 @@ FROM httpd:2.4-bullseye
 
 RUN apt update
 
-RUN apt install -y git sudo
+RUN apt install -y git sudo gcc make
 
 WORKDIR /
-
-RUN rm /var/www/html/index.html
 
 COPY @BASE_REPOSITORY@ /root/.
 
 COPY @STUDENT_REPOSITORY@/trabalho.sh /root/@BASE_REPOSITORY@/trabalho.sh
 
+RUN chmod +x /root/@BASE_REPOSITORY@/trabalho.sh
+
 # EXPOSE 80
 
-CMD [ "/usr/sbin/apache2ctl" , "start" ]
+# CMD [ "/usr/sbin/apache2ctl" , "start" ]

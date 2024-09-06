@@ -55,6 +55,8 @@ while read work; do
 	
 	if [[ $student_number -eq 1 ]]; then
 	
+		# first line is the base assignment repository
+	
 		echo "Cloning base repository ..."
 		
 		git clone $repo 1> $logfile 2>&1 
@@ -81,6 +83,18 @@ while read work; do
 	sed "s/@STUDENT_REPOSITORY@/${student_repo//\//\\\/}/" Dockerfile_base.1 > Dockerfile_base.2
 	
 	mv Dockerfile_base.2 Dockerfile
+	
+	# Running container
+	
+	sudo docker rm grading
+	
+	sudo docker build -t grading .
+	
+	container_id=`sudo docker run -d grading:latest`
+	
+	echo "ID: $container_id"
+	
+	sudo docker exec $container_id "/root/${base_repo}/trabalho.sh" 
 	
 	student_number=$((student_number+1))
 	
