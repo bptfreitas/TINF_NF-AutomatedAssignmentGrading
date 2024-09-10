@@ -36,6 +36,8 @@ fi
 
 cd works
 
+cp ../grade_student.sh .
+
 > $logfile
 
 base_repo=""
