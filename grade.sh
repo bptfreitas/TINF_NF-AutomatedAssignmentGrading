@@ -15,10 +15,10 @@ if [[ $debug -eq 1 ]]; then
 	
 	echo "NOME COMPLETO; REPOSITORIO" > test_repositories.txt
 	
-	echo "PROF; https://github.com/bptfreitas/TINF_NF_Template-UsuariosGruposPermissoes" \
+	echo "PROFESSOR; https://github.com/bptfreitas/TINF_NF_Template-UsuariosGruposPermissoes.git" \
 		>> test_repositories.txt
 		
-	echo "ALUNO; https://github.com/bptfreitas/TINF_NF_Aluno_ArquivosRedirecionamentos.git" \
+	echo "NOME DE UM ALUNO; https://github.com/bptfreitas/TINF_NF_ALUNO-UsuariosGruposPermissoes.git" \
 		>> test_repositories.txt
 		
 	mv test_repositories.txt works/student_repositories.txt
@@ -85,16 +85,17 @@ while read work; do
 	mv Dockerfile_base.2 Dockerfile
 	
 	# Running container
+	fmt_name="`echo $name | tr '[:upper:]' '[:lower:]' | sed 's/ /-/g'`"
 	
-	sudo docker rm grading
+	sudo docker rm grading:$fmt_name
 	
-	sudo docker build -t grading .
+	sudo docker build -t grading:$fmt_name .
 	
-	container_id=`sudo docker run -d grading:latest`
+	sudo docker run grading:$fmt_name
 	
-	echo "ID: $container_id"
+	# echo "ID: $container_id"
 	
-	sudo docker exec $container_id "/root/${base_repo}/trabalho.sh" 
+	# sudo docker exec $container_id "/root/${base_repo}/trabalho.sh" 
 	
 	student_number=$((student_number+1))
 	

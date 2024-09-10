@@ -2,7 +2,7 @@ FROM httpd:2.4-bullseye AS build
 
 WORKDIR /
 
-FROM httpd:2.4-bullseye
+FROM ubuntu:latest
 
 RUN apt update
 
@@ -18,4 +18,4 @@ RUN chmod +x /root/@BASE_REPOSITORY@/trabalho.sh
 
 # EXPOSE 80
 
-# CMD [ "/usr/sbin/apache2ctl" , "start" ]
+CMD [ "/root/@BASE_REPOSITORY@/trabalho.sh" ]
