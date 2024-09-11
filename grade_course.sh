@@ -4,7 +4,9 @@ debug=1
 
 student_number=0
 
-logfile=grade.log
+logfile=run.log
+
+gradefile=grades.dat
 
 mkdir -p works
 
@@ -39,6 +41,8 @@ cd works
 cp ../grade_student.sh .
 
 > $logfile
+
+> $gradefile
 
 base_repo=""
 
@@ -105,11 +109,11 @@ while read work; do
 	
 	sudo docker build -t grading:$tag .
 	
-	sudo docker run grading:$tag # >> $logfile
+	sudo docker run grading:$tag >> $logfile
 	
-	nota=`tail -1 $logfile | grep '[0-9]{1,2}\.[0-9]'`
+	nota=`tail -1 $logfile | grep -E -o '[0-9]+\.[0-9]+'`
 	
-	echo "$name: $nota"		
+	echo "$name: $nota"	| tee -a ./$gradefile
 	
 	# container_id="`sudo docker ps -a | grep 'grading:$tag' | awk '{ print $1 } '`"
 		
