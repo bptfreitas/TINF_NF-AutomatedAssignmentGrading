@@ -6,16 +6,22 @@ RUN apt install -y git sudo gcc make
 
 WORKDIR /
 
-COPY @BASE_REPOSITORY@ /root/.
+COPY @BASE_REPOSITORY@/ /root/@BASE_REPOSITORY@/
 
-COPY @STUDENT_REPOSITORY@/trabalho.sh /root/@BASE_REPOSITORY@/trabalho.sh
+WORKDIR /root/@BASE_REPOSITORY@/
 
 COPY ./grade_student.sh /root/@BASE_REPOSITORY@/grade_student.sh
 
-RUN chmod +x /root/@BASE_REPOSITORY@/trabalho.sh
+COPY @STUDENT_REPOSITORY@/trabalho.sh /root/@BASE_REPOSITORY@/trabalho.sh
 
-RUN chmod +x /root/@BASE_REPOSITORY@/grade_student.sh
+RUN chmod +x ./grade_student.sh
+
+RUN chmod +x ./corretor
+
+RUN chmod +x ./trabalho.sh
 
 # EXPOSE 80
 
-CMD [ "/root/@BASE_REPOSITORY@/grade_student.sh" ]
+CMD [ "./grade_student.sh" ]
+
+# CMD [ "ls" ]

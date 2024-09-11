@@ -83,9 +83,9 @@ while read work; do
 	
 	student_repo=`basename $repo .git`
 	
-	sed "s/@BASE_REPOSITORY@/${base_repo//\//\\\/}/" Dockerfile_base > Dockerfile_base.1
+	sed "s/@BASE_REPOSITORY@/${base_repo//\//\\\/}/g" Dockerfile_base > Dockerfile_base.1
 	
-	sed "s/@STUDENT_REPOSITORY@/${student_repo//\//\\\/}/" Dockerfile_base.1 > Dockerfile_base.2
+	sed "s/@STUDENT_REPOSITORY@/${student_repo//\//\\\/}/g" Dockerfile_base.1 > Dockerfile_base.2
 	
 	mv Dockerfile_base.2 Dockerfile
 	
@@ -105,8 +105,14 @@ while read work; do
 	
 	sudo docker build -t grading:$tag .
 	
-	sudo docker run grading:$tag
+	sudo docker run grading:$tag # >> $logfile
 	
+	nota=`tail -1 $logfile | grep '[0-9]{1,2}\.[0-9]'`
+	
+	echo "$name: $nota"		
+	
+	# container_id="`sudo docker ps -a | grep 'grading:$tag' | awk '{ print $1 } '`"
+		
 	# echo "ID: $container_id"
 	
 	# sudo docker exec $container_id "/root/${base_repo}/trabalho.sh" 
