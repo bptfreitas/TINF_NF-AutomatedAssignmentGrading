@@ -4,39 +4,88 @@ debug=1
 
 student_number=0
 
-logfile=run.log
-
 gradefile=grades.dat
 
-mkdir -p works
+assignments_dir="works"
+assignment_name="grading"
 
-cp Dockerfile works/Dockerfile_base
+while [[ $# -gt 0 ]]; do
+
+	key="$1"
+
+	case $key in
+		--output-dir|-o)
+		assignments_dir="$2"
+		
+		if [[ "${assignments_dir}" == "" ]]; then
+			echo "ERROR: empty assignment dir"!
+			exit -1
+		fi
+		
+		shift # past argument
+		shift # past value
+		;;
+		
+		--assignment-name|-a)
+		assignment_name="$2"
+		
+		if [[ "${assignment_name}" == "" ]]; then
+			echo "ERROR: empty work name!"
+			exit -1
+		fi
+		
+		shift # past argument
+		shift # past value
+		;;		
+
+		*)    # unknown option
+		POSITIONAL+=("$1") # save it in an array for later
+		shift # past argument
+		;;
+	esac
+done
+
+logfile="${assignment_name}.log"
+
+if [[ ! -d "${assignments_dir}" ]]; then
+	rm -rf "${assignments_dir}"
+fi
+
+mkdir -p "${assignments_dir}"
+
+cp Dockerfile "${assignments_dir}/Dockerfile_base"
 
 if [[ $debug -eq 1 ]]; then
 
 	echo "[DEBUG] Creating test file..."
 	
-	echo "NOME COMPLETO; REPOSITORIO" > test_repositories.txt
+	echo "https://github.com/bptfreitas/TINF_NF_Template-UsuariosGruposPermissoes.git" \
+		>> test_repositories.txt
+		
+	mv test_repositories.txt "${assignments_dir}/main_repository.txt"
 	
-	echo "PROFESSOR; https://github.com/bptfreitas/TINF_NF_Template-UsuariosGruposPermissoes.git" \
+	echo "NOME COMPLETO; REPOSITORIO" > test_repositories.txt
+		
+	echo "ALUNO ERRADO; https://github.com/bptfreitas/TINF_NF_ALUNO-UsuariosGruposPermissoes.git" \
 		>> test_repositories.txt
 		
-	echo "NOME DE UM ALUNO; https://github.com/bptfreitas/TINF_NF_ALUNO-UsuariosGruposPermissoes.git" \
-		>> test_repositories.txt
-		
-	mv test_repositories.txt works/student_repositories.txt
+	mv test_repositories.txt "${assignments_dir}/student_repositories.txt"
 	
 	image_name="grading-dev"
 
 else
 
+	echo "Copying main repository ..."
+	
+	cp main_repository.txt "${assignments_dir}/."
+
 	echo "Copying student repositories ..."
 
-	cp student_repositories.txt works/.
-
+	cp student_repositories.txt "${assignments_dir}/."
+	
 fi
 
-cd works
+cd "${assignments_dir}"
 
 cp ../grade_student.sh .
 
@@ -44,7 +93,22 @@ cp ../grade_student.sh .
 
 > $gradefile
 
-base_repo=""
+repo="`cat main_repository.txt`"
+
+echo "Cloning base repository ..."
+
+base_repo=`basename $repo .git`
+		
+git clone $repo 1> $logfile 2>&1
+
+if [[ ! -d "$base_repo" ]]; then
+	echo -e "[ERROR] Base repository '$base_repo' could not be cloned!\nAborting" | tee -a $logfile
+	exit -1
+fi
+
+student_number=0
+
+echo "Base repository: $base_repo" | tee -a $logfile
 
 while read work; do
 
@@ -52,40 +116,28 @@ while read work; do
 	
 	if [[ $student_number -eq 0 ]]; then
 	
-		echo "Header line, skipping"
+		echo "Header line, skipping" | tee -a $logfile
 		
-		student_number=$((student_number+1))		
+		student_number=$((student_number+1))	
 		continue
 	fi
 		
 	name="`echo "$work" | cut -f1 -d';'`"
 	
 	repo="`echo "$work" | cut -f2 -d';'`"
+		
+	echo "[$(( student_number ))] Student: $name" | tee -a $logfile
+		
+	echo "Cloning student repository: $repo" | tee -a $logfile
 	
-	if [[ $student_number -eq 1 ]]; then
+	git clone $repo 1> $logfile 2>&1 | tee -a $logfile
 	
-		# first line clones the base assignment repository
+	student_repo="`basename $repo .git`"
 	
-		echo "Cloning base repository ..."
-		
-		git clone $repo 1> $logfile 2>&1 
-		
-		base_repo=`basename $repo .git`
-		
-		[[ $debug -eq 1 ]] && echo "[DEBUG] base_repo: $base_repo"								
-		
-		student_number=$((student_number+1))		
+	if [[ ! -d "${student_repo}" ]]; then
+		echo "[WARN] $name's repository $repo could not be cloned! Skipping..." | tee -a $logfile
 		continue
-	fi		
-	
-	
-	echo "[$(( student_number -1))] Student: $name"
-		
-	echo "Cloning student repository: $repo"
-	
-	git clone $repo 1> $logfile 2>&1 
-	
-	student_repo=`basename $repo .git`
+	fi
 	
 	sed "s/@BASE_REPOSITORY@/${base_repo//\//\\\/}/g" Dockerfile_base > Dockerfile_base.1
 	
@@ -101,15 +153,15 @@ while read work; do
 	
 	tag="${first_name}-${last_name}"
 	
-	echo "Tag: $tag"
+	echo "Tag: $tag" | tee -a $logfile
 	
 	# Running container
 	
-	sudo docker rm grading:$tag
+	sudo docker rm ${assignment_name}:${tag} | tee -a $logfile
 	
-	sudo docker build -t grading:$tag .
+	sudo docker build -t ${assignment_name}:${tag} . | tee -a $logfile
 	
-	sudo docker run grading:$tag >> $logfile
+	sudo docker run ${assignment_name}:${tag} >> $logfile 
 	
 	nota=`tail -1 $logfile | grep -E -o '[0-9]+\.[0-9]+'`
 	
