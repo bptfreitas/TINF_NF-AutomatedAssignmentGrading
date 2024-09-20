@@ -2,4 +2,3 @@
 
 ./trabalho.sh
 
-./corrigir
