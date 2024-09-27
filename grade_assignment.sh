@@ -1,6 +1,6 @@
 #!/bin/bash
 
-debug=1
+debug=0
 
 student_number=0
 
@@ -99,7 +99,7 @@ echo "Cloning base repository ..."
 
 base_repo=`basename $repo .git`
 		
-git clone $repo 1> $logfile 2>&1
+git clone $repo 1>> $logfile 2>&1
 
 if [[ ! -d "$base_repo" ]]; then
 	echo -e "[ERROR] Base repository '$base_repo' could not be cloned!\nAborting" | tee -a $logfile
@@ -122,17 +122,27 @@ while read work; do
 		continue
 	fi
 		
-	name="`echo "$work" | cut -f1 -d';'`"
+	name="`echo "$work" | cut -f1 -d';' | sed 'y/ÃẼĨÕŨ/AEIOU/'`"
 	
 	repo="`echo "$work" | cut -f2 -d';'`"
-		
+	
+	# formatting name for the image tag and folder
+	fmt_name="`echo $name | tr '[:upper:]' '[:lower:]' | sed 's/ /-/g'`"
+	
+	first_name=`echo $name | cut -d' ' -f1 | tr '[:upper:]' '[:lower:]' `
+	last_name=`echo $name | awk -F' ' '{ print $NF }' | tr '[:upper:]' '[:lower:]'`
+	
+	tag="${first_name}-${last_name}"
+	
+	student_repo="${student_number}_${tag}"
+				
 	echo "[$(( student_number ))] Student: $name" | tee -a $logfile
 		
 	echo "Cloning student repository: $repo" | tee -a $logfile
 	
-	git clone $repo 1> $logfile 2>&1 | tee -a $logfile
-	
-	student_repo="`basename $repo .git`"
+	git clone $repo "$student_repo" 1>> $logfile 2>&1 | tee -a $logfile
+			
+	# student_repo="`basename $repo .git`"
 	
 	if [[ ! -d "${student_repo}" ]]; then
 		echo "[WARN] $name's repository $repo could not be cloned! Skipping..." | tee -a $logfile
@@ -161,7 +171,7 @@ while read work; do
 	
 	sudo docker build -t ${assignment_name}:${tag} . | tee -a $logfile
 	
-	sudo docker run ${assignment_name}:${tag} >> $logfile 
+	sudo docker run --stop-timeout 60 ${assignment_name}:${tag} | tee -a $logfile 
 	
 	nota=`tail -1 $logfile | grep -E -o '[0-9]+\.[0-9]+'`
 	

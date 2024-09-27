@@ -2,6 +2,4 @@
 
 ./trabalho.sh
 
-ls -la
-
 ./corretor
