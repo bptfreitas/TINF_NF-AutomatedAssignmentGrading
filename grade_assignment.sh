@@ -1,12 +1,13 @@
 #!/bin/bash
 
-debug=0
+debug=1
 
 student_number=0
 
 gradefile=grades.dat
 
 assignments_dir="works"
+student_log_dir="logs"
 assignment_name="grading"
 
 while [[ $# -gt 0 ]]; do
@@ -87,6 +88,8 @@ fi
 
 cd "${assignments_dir}"
 
+mkdir logs
+
 cp ../grade_student.sh .
 
 > $logfile
@@ -165,13 +168,15 @@ while read work; do
 	
 	echo "Tag: $tag" | tee -a $logfile
 	
+	student_log="${student_repo}/$tag.log"
+	
 	# Running container
 	
 	sudo docker rm ${assignment_name}:${tag} | tee -a $logfile
 	
 	sudo docker build -t ${assignment_name}:${tag} . | tee -a $logfile
 	
-	sudo docker run --stop-timeout 60 ${assignment_name}:${tag} | tee -a $logfile 
+	sudo docker run --stop-timeout 60 ${assignment_name}:${tag} | tee -a $student_log
 	
 	nota=`tail -1 $logfile | grep -E -o '[0-9]+\.[0-9]+'`
 	
