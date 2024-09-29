@@ -7,7 +7,7 @@ student_number=0
 gradefile=grades.dat
 
 assignments_dir="works"
-student_log_dir="logs"
+execution_logs_dir="execution-logs"
 assignment_name="grading"
 
 while [[ $# -gt 0 ]]; do
@@ -88,7 +88,7 @@ fi
 
 cd "${assignments_dir}"
 
-mkdir logs
+mkdir ${execution_logs_dir}
 
 cp ../grade_student.sh .
 
@@ -168,7 +168,7 @@ while read work; do
 	
 	echo "Tag: $tag" | tee -a $logfile
 	
-	student_log="${student_repo}/$tag.log"
+	student_log="${execution_logs_dir}/$tag.log"
 	
 	# Running container
 	
