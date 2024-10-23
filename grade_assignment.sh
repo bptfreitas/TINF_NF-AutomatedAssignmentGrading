@@ -1,6 +1,6 @@
 #!/bin/bash
 
-debug=1
+debug=0
 
 student_number=0
 
@@ -178,7 +178,7 @@ while read work; do
 	
 	sudo docker run --stop-timeout 60 ${assignment_name}:${tag} | tee -a $student_log
 	
-	nota=`tail -1 $logfile | grep -E -o '[0-9]+\.[0-9]+'`
+	nota=`tail -1 $student_log | grep -E -o '[0-9]+\.[0-9]+'`
 	
 	echo "$name: $nota"	| tee -a ./$gradefile
 	
