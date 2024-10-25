@@ -1,6 +1,6 @@
 #!/bin/bash
 
-debug=1
+debug=0
 
 student_number=0
 
@@ -130,7 +130,9 @@ while read work; do
 	repo="`echo "$work" | cut -f2 -d';'`"
 	
 	# formatting name for the image tag and folder
-	fmt_name="`echo $name | tr '[:upper:]' '[:lower:]' | sed 's/ /-/g'`"
+	fmt_name="`echo $name | tr '[:upper:]' '[:lower:]' \
+		| sed 's/ /-/g' \
+		| sed -i 'y/ÃẼĨÕŨÇãẽĩõũç/AEIOUCaeiouc/'`"
 	
 	first_name=`echo $name | cut -d' ' -f1 | tr '[:upper:]' '[:lower:]' `
 	last_name=`echo $name | awk -F' ' '{ print $NF }' | tr '[:upper:]' '[:lower:]'`
@@ -156,10 +158,12 @@ while read work; do
 	
 	sed "s/@STUDENT_REPOSITORY@/${student_repo//\//\\\/}/g" Dockerfile_base.1 > Dockerfile_base.2
 	
-	mv Dockerfile_base.2 Dockerfile
+	cp Dockerfile_base.2 Dockerfile
 	
 	# formatting name for the image tag 
-	fmt_name="`echo $name | tr '[:upper:]' '[:lower:]' | sed 's/ /-/g' | sed -i 'y/ÃẼĨÕŨ/AEIOU/'`"
+	fmt_name="`echo $name | tr '[:upper:]' '[:lower:]' \
+		| sed 's/ /-/g' \
+		| sed -i 'y/ÃẼĨÕŨãẽĩõũÇç/AEIOUaeiouCc/'`"
 	
 	first_name=`echo $name | cut -d' ' -f1 | tr '[:upper:]' '[:lower:]' `
 	last_name=`echo $name | awk -F' ' '{ print $NF }' | tr '[:upper:]' '[:lower:]'`
@@ -168,7 +172,7 @@ while read work; do
 	
 	echo "Tag: $tag" | tee -a $logfile
 	
-	student_log="${student_repo}/$tag.log"
+	student_log="logs/$tag.log"
 	
 	# Running container
 	
@@ -178,7 +182,7 @@ while read work; do
 	
 	sudo docker run --stop-timeout 60 ${assignment_name}:${tag} | tee -a $student_log
 	
-	nota=`tail -1 $logfile | grep -E -o '[0-9]+\.[0-9]+'`
+	nota=`tail -1 $student_log | grep -E -o '[0-9]+\.[0-9]+'`
 	
 	echo "$name: $nota"	| tee -a ./$gradefile
 	
