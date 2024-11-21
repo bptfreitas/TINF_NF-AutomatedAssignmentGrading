@@ -159,7 +159,9 @@ while read work; do
 	mv Dockerfile_base.2 Dockerfile
 	
 	# formatting name for the image tag 
-	fmt_name="`echo $name | tr '[:upper:]' '[:lower:]' | sed 's/ /-/g' | sed -i 'y/ÃẼĨÕŨ/AEIOU/'`"
+	fmt_name="`echo $name | tr '[:upper:]' '[:lower:]' \
+		| sed 's/ /-/g' \
+		| sed -i 'y/ÃẼĨÕŨãẽĩõũÇç/AEIOUaeiouCc/'`"
 	
 	first_name=`echo $name | cut -d' ' -f1 | tr '[:upper:]' '[:lower:]' `
 	last_name=`echo $name | awk -F' ' '{ print $NF }' | tr '[:upper:]' '[:lower:]'`
