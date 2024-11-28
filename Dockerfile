@@ -14,7 +14,7 @@ ENV PATH="$PATH:/usr/games"
 
 COPY ./grade_student.sh /root/@BASE_REPOSITORY@/grade_student.sh
 
-COPY @STUDENT_REPOSITORY@/trabalho.sh /root/@BASE_REPOSITORY@/trabalho.sh
+COPY @STUDENT_REPOSITORY@/trabalho*.sh /root/@BASE_REPOSITORY@/.
 
 RUN chmod +x ./grade_student.sh
 
