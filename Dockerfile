@@ -10,6 +10,8 @@ COPY @BASE_REPOSITORY@/ /root/@BASE_REPOSITORY@/
 
 WORKDIR /root/@BASE_REPOSITORY@/
 
+ENV PATH="$PATH:/usr/games"
+
 COPY ./grade_student.sh /root/@BASE_REPOSITORY@/grade_student.sh
 
 COPY @STUDENT_REPOSITORY@/trabalho.sh /root/@BASE_REPOSITORY@/trabalho.sh
