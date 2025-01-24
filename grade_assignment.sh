@@ -1,10 +1,8 @@
 #!/bin/bash
 
-debug=0
-
 student_number=0
 
-gradefile=grades.dat
+gradefile="grades.dat"
 
 assignments_dir="works"
 execution_logs_dir="execution-logs"
@@ -69,6 +67,15 @@ if [[ $debug -eq 1 ]]; then
 		
 	echo "ALUNO ERRADO; https://github.com/bptfreitas/TINF_NF_ALUNO-UsuariosGruposPermissoes.git" \
 		>> test_repositories.txt
+
+	echo "ÁÉÍÓÚ áéíóú; https://github.com/bptfreitas/TINF_NF_ALUNO-UsuariosGruposPermissoes.git" \
+		>> test_repositories.txt
+
+	echo "MAÇÃ maçã; https://github.com/bptfreitas/TINF_NF_ALUNO-UsuariosGruposPermissoes.git" \
+		>> test_repositories.txt
+
+	echo "ÀÈÌÒÙ àèìòù; https://github.com/bptfreitas/TINF_NF_ALUNO-UsuariosGruposPermissoes.git" \
+		>> test_repositories.txt		
 		
 	mv test_repositories.txt "${assignments_dir}/student_repositories.txt"
 	
@@ -125,17 +132,27 @@ while read work; do
 		continue
 	fi
 		
-	name="`echo "$work" | cut -f1 -d';' | sed 'y/ÃẼĨÕŨ/AEIOU/'`"
+	name="`echo "$work" | cut -f1 -d';'`"
 	
 	repo="`echo "$work" | cut -f2 -d';'`"
 	
 	# formatting name for the image tag and folder
-	fmt_name="`echo $name | tr '[:upper:]' '[:lower:]' \
-		| sed 's/ /-/g' \
-		| sed -i 'y/ÃẼĨÕŨÇãẽĩõũç/AEIOUCaeiouc/'`"
+	name_to_lower="`echo $name | tr '[:upper:]' '[:lower:]'`"
+
+	# echo "name_to_lower: $name_to_lower"
+
+	fmt_name="`echo $name_to_lower | sed 's/ /-/g'`"
+
+	echo "FMT: $fmt_name"
 	
-	first_name=`echo $name | cut -d' ' -f1 | tr '[:upper:]' '[:lower:]' `
-	last_name=`echo $name | awk -F' ' '{ print $NF }' | tr '[:upper:]' '[:lower:]'`
+	fmt_name2="`echo "$fmt_name" | sed -i 'y/Ã/A/'`"
+
+	echo "FMT2: $fmt_name2"
+
+	continue
+	
+	first_name=`echo $fmt_name | cut -d'-' -f1`
+	last_name=`echo $fmt_name | awk -F'-' '{ print $NF }'`
 	
 	tag="${first_name}-${last_name}"
 	
@@ -145,46 +162,35 @@ while read work; do
 		
 	echo "Cloning student repository: $repo" | tee -a $logfile
 	
-	git clone $repo "$student_repo" 1>> $logfile 2>&1 | tee -a $logfile
-			
-	# student_repo="`basename $repo .git`"
+	git clone $repo "tmp_${student_repo}" 1>> $logfile 2>&1 | tee -a $logfile		
 	
-	if [[ ! -d "${student_repo}" ]]; then
+	if [[ ! -d "tmp_${student_repo}" ]]; then
 		echo "[WARN] $name's repository $repo could not be cloned! Skipping..." | tee -a $logfile
 		continue
 	fi
-	
-	sed "s/@BASE_REPOSITORY@/${base_repo//\//\\\/}/g" Dockerfile_base > Dockerfile_base.1
-	
-	sed "s/@STUDENT_REPOSITORY@/${student_repo//\//\\\/}/g" Dockerfile_base.1 > Dockerfile_base.2
-	
-	cp Dockerfile_base.2 Dockerfile
-	
-	# formatting name for the image tag 
-	fmt_name="`echo $name | tr '[:upper:]' '[:lower:]' \
-		| sed 's/ /-/g' \
-		| sed -i 'y/ÃẼĨÕŨãẽĩõũÇç/AEIOUaeiouCc/'`"
-	
-	first_name=`echo $name | cut -d' ' -f1 | tr '[:upper:]' '[:lower:]' `
-	last_name=`echo $name | awk -F' ' '{ print $NF }' | tr '[:upper:]' '[:lower:]'`
-	
-	tag="${first_name}-${last_name}"
+
+	# copying student files
+	cp -r "${base_repo}" "${student_repo}"
+	cp "tmp_${student_repo}/trabalho*.sh" "${student_repo}"/.
 	
 	echo "Tag: $tag" | tee -a $logfile
 	
 	student_log="${execution_logs_dir}/$tag.log"
 	
 	# Running container
+	cd ${student_repo}
 	
 	sudo docker rm ${assignment_name}:${tag} | tee -a $logfile
 	
-	sudo docker build -t ${assignment_name}:${tag} . | tee -a $logfile
+	sudo docker build -f .Dockerfile -t ${assignment_name}:${tag} . | tee -a $logfile
 	
 	sudo docker run --stop-timeout 60 ${assignment_name}:${tag} | tee -a $student_log
 	
 	nota=`tail -1 $student_log | grep -E -o '[0-9]+\.[0-9]+'`
+
+	cd ..
 	
-	echo "$name: $nota"	| tee -a ./$gradefile
+	echo "$name: $nota"	| tee -a ./../$gradefile
 	
 	# container_id="`sudo docker ps -a | grep 'grading:$tag' | awk '{ print $1 } '`"
 		
@@ -192,7 +198,7 @@ while read work; do
 	
 	# sudo docker exec $container_id "/root/${base_repo}/trabalho.sh" 
 	
-	student_number=$((student_number+1))
+	student_number=$(( student_number + 1 ))
 	
 done < student_repositories.txt
 
