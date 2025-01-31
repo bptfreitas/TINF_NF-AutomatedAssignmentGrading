@@ -8,6 +8,8 @@ assignments_dir="works"
 execution_logs_dir="execution-logs"
 assignment_name="grading"
 
+debug=1
+
 while [[ $# -gt 0 ]]; do
 
 	key="$1"
@@ -54,7 +56,7 @@ mkdir -p "${assignments_dir}"
 
 cp Dockerfile "${assignments_dir}/Dockerfile_base"
 
-if [[ $debug -eq 1 ]]; then
+if [[ $create_assignments -eq 1 ]]; then
 
 	echo "[DEBUG] Creating test file..."
 	
@@ -97,9 +99,11 @@ cd "${assignments_dir}"
 
 mkdir ${execution_logs_dir}
 
-cp ../grade_student.sh .
+execution_logs_dir="`pwd`/${execution_logs_dir}"
 
 > $logfile
+
+gradefile="`pwd`/$gradefile"
 
 > $gradefile
 
@@ -122,7 +126,7 @@ echo "Base repository: $base_repo" | tee -a $logfile
 
 while read work; do
 
-	[[ $debug -eq 1 ]] && echo "[DEBUG] Work: $work"
+	# [[ $debug -eq 1 ]] && echo "[DEBUG] Work: $work"
 	
 	if [[ $student_number -eq 0 ]]; then
 	
@@ -134,25 +138,15 @@ while read work; do
 		
 	name="`echo "$work" | cut -f1 -d';'`"
 	
+	# [[ $debug -eq 1 ]] && echo "[DEBUG] Name: $name"
+	
 	repo="`echo "$work" | cut -f2 -d';'`"
 	
 	# formatting name for the image tag and folder
-	name_to_lower="`echo $name | tr '[:upper:]' '[:lower:]'`"
-
-	# echo "name_to_lower: $name_to_lower"
-
-	fmt_name="`echo $name_to_lower | sed 's/ /-/g'`"
-
-	echo "FMT: $fmt_name"
+	fmt_name="`echo $name | tr '[:upper:]' '[:lower:]' | tr -dc '[:alnum:]\n\r '`"
 	
-	fmt_name2="`echo "$fmt_name" | sed -i 'y/Ã/A/'`"
-
-	echo "FMT2: $fmt_name2"
-
-	continue
-	
-	first_name=`echo $fmt_name | cut -d'-' -f1`
-	last_name=`echo $fmt_name | awk -F'-' '{ print $NF }'`
+	first_name=`echo $fmt_name | cut -d' ' -f1`
+	last_name=`echo $fmt_name | awk -F' ' '{ print $NF }'`
 	
 	tag="${first_name}-${last_name}"
 	
@@ -171,7 +165,8 @@ while read work; do
 
 	# copying student files
 	cp -r "${base_repo}" "${student_repo}"
-	cp "tmp_${student_repo}/trabalho*.sh" "${student_repo}"/.
+	
+	cp tmp_${student_repo}/trabalho*.sh ${student_repo}/.
 	
 	echo "Tag: $tag" | tee -a $logfile
 	
@@ -180,25 +175,23 @@ while read work; do
 	# Running container
 	cd ${student_repo}
 	
-	sudo docker rm ${assignment_name}:${tag} | tee -a $logfile
+	> $student_log
 	
-	sudo docker build -f .Dockerfile -t ${assignment_name}:${tag} . | tee -a $logfile
-	
-	sudo docker run --stop-timeout 60 ${assignment_name}:${tag} | tee -a $student_log
+	TAG="$tag" ./corrigir.sh 1>> $student_log 2>&1
 	
 	nota=`tail -1 $student_log | grep -E -o '[0-9]+\.[0-9]+'`
 
 	cd ..
 	
-	echo "$name: $nota"	| tee -a ./../$gradefile
-	
-	# container_id="`sudo docker ps -a | grep 'grading:$tag' | awk '{ print $1 } '`"
+	echo "$name: $nota"	| tee -a $gradefile
 		
-	# echo "ID: $container_id"
-	
-	# sudo docker exec $container_id "/root/${base_repo}/trabalho.sh" 
-	
 	student_number=$(( student_number + 1 ))
 	
 done < student_repositories.txt
+
+
+sort $gradefile > $gradefile.1
+
+mv $gradefile.1 $gradefile
+
 
